@@ -43,7 +43,7 @@ Splinter is configurable under **AMP → Shard → App Settings → Splinter**. 
 
 ## Installation
 
-1. Download the appropriate `Splinter-win-x64.zip` or `Splinter-linux-x64.zip` from [GitHub Releases](https://github.com/winglessraven/AMP-Splinter/releases).
+1. Download the appropriate `Splinter-win-x64.zip` or `Splinter-linux-x64.zip` from [GitHub Releases](https://github.com/winglessraven/AMP3-Splinter/releases).
 2. Extract the entire archive, including its `payload/` directory.
 3. Run the installer **from the extracted directory** with administrative privileges.
 4. Open AMP 3 → your Shard → **App Settings → Splinter** to configure and enable the bot.
