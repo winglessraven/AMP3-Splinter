@@ -1,0 +1,49 @@
+# .NET / MSBuild outputs (all projects, including local tests)
+**/bin/
+**/obj/
+**/TestResults/
+**/artifacts/
+
+# Release archives and local packaging outputs
+/dist/
+/publish/
+*.zip
+*.nupkg
+*.snupkg
+*.patch
+
+# Maintainer-only tests and the local Visual Studio solution
+/tests/
+/Splinter.Local.sln
+
+# IDE/editor state
+.vs/
+.vscode/
+.idea/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.rsuser
+
+# Logs, private settings, runtime data and temporary files
+/splinter/
+.env
+.env.*
+!.env.example
+*.log
+*.tmp
+*.bak
+*.bakjson
+*.amp
+secret-key
+secret-key.*
+*.pfx
+*.p12
+*.pem
+*.key
+
+# OS-specific clutter
+.DS_Store
+Thumbs.db
+Desktop.ini
