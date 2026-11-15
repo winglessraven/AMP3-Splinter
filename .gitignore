@@ -15,6 +15,7 @@
 # Maintainer-only tests and the local Visual Studio solution
 /tests/
 /Splinter.Local.sln
+/Splinter.Admin/
 
 # IDE/editor state
 .vs/

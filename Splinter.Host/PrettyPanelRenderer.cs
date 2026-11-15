@@ -94,8 +94,8 @@ public static class PrettyPanelRenderer
         Rect(canvas, new SKRect(0, 0, 12, height), accent);
         RoundRect(canvas, new SKRect(34, 24, 225, 68), 8, accent);
         FitText(canvas, OneLine(state.ToUpperInvariant(), 25), 49, 54, 164, statusFont, new SKColor(7, 20, 20));
-        FitText(canvas, name, 42, 137, 938, nameFont, Ink);
-        FitText(canvas, snapshot.Name, 44, 176, 930, textFont, Muted);
+        FitText(canvas, name, 42, 137, 938, nameFont, Ink, outlined: true);
+        FitText(canvas, snapshot.Name, 44, 176, 930, textFont, Muted, outlined: true);
 
         DrawMetric(canvas, 42, "PLAYERS", players, labelFont, valueFont,
             config.ShowPlayerCount && snapshot.MaxPlayers is > 0 && snapshot.Players is int count
@@ -108,7 +108,7 @@ public static class PrettyPanelRenderer
                 ? Math.Clamp((float)(used / snapshot.MemoryLimitMb.Value), 0, 1) : null, accent);
 
         FitText(canvas, !string.IsNullOrWhiteSpace(address) ? "JOIN: " + address : "JOIN ADDRESS NOT CONFIGURED",
-            44, 381, 936, textFont, !string.IsNullOrWhiteSpace(address) ? Ink : Muted);
+            44, 381, 936, textFont, !string.IsNullOrWhiteSpace(address) ? Ink : Muted, outlined: true);
 
         int y = Height;
         if (sections)
@@ -161,7 +161,16 @@ public static class PrettyPanelRenderer
             FitText(canvas, OneLine(value, 240), 286, y + 31, 672, textFont, Ink);
             y += 58;
         }
-        FitText(canvas, footer, 44, height - 16, 925, smallFont, Muted);
+        // Keep the tagline left-aligned; a matching small footer on the right
+        // shows when this particular uploaded image was last rendered.
+        string updated = "Last updated: " +
+            currentTime.ToLocalTime().ToString("HH:mm", CultureInfo.InvariantCulture);
+        float updatedWidth = smallFont.MeasureText(updated);
+        float updatedX = Width - 44 - updatedWidth;
+        FitText(canvas, footer, 44, height - 16,
+            Math.Max(0, updatedX - 66), smallFont, Muted, outlined: true);
+        FitText(canvas, updated, updatedX, height - 16,
+            updatedWidth + 2, smallFont, Muted, outlined: true);
         using SKImage outputImage = surface.Snapshot();
         using SKData png = outputImage.Encode(SKEncodedImageFormat.Png, 100)
             ?? throw new InvalidOperationException("Skia could not encode the Pretty Panel PNG.");
@@ -193,12 +202,26 @@ public static class PrettyPanelRenderer
     }
 
     private static void FitText(SKCanvas canvas, string? value, float x, float baseline,
-        float maxWidth, SKFont font, SKColor color)
+        float maxWidth, SKFont font, SKColor color, bool outlined = false)
     {
         string text = OneLine(value, 300);
         if (maxWidth <= 0) return;
         while (text.Length > 1 && font.MeasureText(text) > maxWidth)
             text = text[..^2] + "…";
+        if (outlined)
+        {
+            // Only for text drawn directly over artwork. Panels/metrics already
+            // have opaque dark surfaces, so their styling remains unchanged.
+            using var outline = new SKPaint
+            {
+                Color = new SKColor(0, 0, 0, 225),
+                IsAntialias = true,
+                Style = SKPaintStyle.Stroke,
+                StrokeWidth = Math.Clamp(font.Size / 13f, 1.5f, 4f),
+                StrokeJoin = SKStrokeJoin.Round
+            };
+            canvas.DrawText(text, x, baseline, SKTextAlign.Left, font, outline);
+        }
         using var paint = new SKPaint { Color = color, IsAntialias = true };
         canvas.DrawText(text, x, baseline, SKTextAlign.Left, font, paint);
     }

@@ -106,7 +106,10 @@ public sealed class BotSession : IAsyncDisposable
     private DateTimeOffset _presenceAt = DateTimeOffset.MinValue;
     private string? _lastPanelContent;
     private string? _lastPanelImageStamp;
-    private bool _ready;
+    private volatile bool _ready;
+    // A resumed Discord gateway can be connected without emitting Ready again.
+    // Never treat a connection as ready until this session received Ready once.
+    private volatile bool _hasBeenReady;
     private bool _disposed;
     public string ConfigVersion { get; }
 
@@ -267,6 +270,7 @@ public sealed class BotSession : IAsyncDisposable
     // multiple REST calls and must never block Discord.Net's gateway pump.
     private Task ReadyAsync()
     {
+        _hasBeenReady = true;
         _ready = true;
         BotLog.Write($"Discord bot ready for Shard {_id:D}; synchronising commands in {_client.Guilds.Count} guild(s).");
         foreach (SocketGuild guild in _client.Guilds) QueueRegistration(guild);
@@ -877,7 +881,23 @@ public sealed class BotSession : IAsyncDisposable
     public async Task UpdateAsync(ShardSnapshot snapshot, CancellationToken ct)
     {
         _snapshot = snapshot;
-        if (_disposed || !_ready || _client.ConnectionState != ConnectionState.Connected) return;
+        if (_disposed || _client.ConnectionState != ConnectionState.Connected) return;
+        if (!_ready)
+        {
+            // Discord.Net may RESUME a session without another Ready event.
+            // Slash commands work in that state, but the previous readiness
+            // guard could silently disable ALL automatic panel updates.
+            if (!_hasBeenReady) return; // Initial guild cache not ready yet.
+            _ready = true;
+            _lastPresence = null;
+            _lastPresenceType = null;
+            _lastUserStatus = null;
+            _lastPanelContent = null;
+            _lastPanelImageStamp = null;
+            _presenceAt = DateTimeOffset.MinValue;
+            _panelAt = DateTimeOffset.MinValue;
+            BotLog.Write($"Discord {_id:D} gateway connection resumed; automatic panel updates restored.");
+        }
         await _updateGate.WaitAsync(ct).ConfigureAwait(false);
         try
         {

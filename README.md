@@ -122,7 +122,7 @@ Splinter logs are stored under the AMP 3 data root at `splinter/logs/splinter.lo
 
 ## Build from source
 
-Development requires the **.NET 10 SDK**. The public solution includes the host plugin, setup utility and AMP metadata inspector:
+Development requires the **.NET 10 SDK**. The public solution includes the host plugin and setup utility:
 
 ```powershell
 dotnet build .\Splinter.sln -c Release
